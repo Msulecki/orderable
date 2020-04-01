@@ -1,0 +1,104 @@
+
+.list {
+    margin:0;
+    padding: 20px;
+    border-radius: 5px;
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid hsl(0,0,50);
+    background-color: hsla(0,0,0,0.2);
+    box-shadow: 0 20px 20px -5px hsla(0,0,0,0.4);
+  
+    &__item {
+      width: 300px;
+      height: 34px;
+      background-color: hsl(0,0,70);
+      border: 1px solid hsl(0,0,30);
+      display: flex;
+      align-items: center;
+      margin: 1px 0;
+      user-select: none;
+  
+      &:hover{
+        background-color: hsl(0,0,75);
+      }
+  
+      &.slideRight {
+        animation: slideRight 400ms forwards;
+      }
+  
+      &.hidden {
+        visibility: hidden;
+      }
+  
+      &.dummy {
+        visibility: hidden;
+      }
+  
+      &-title {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        font-weight: 100;
+  
+        h1 {
+          font-size: 1em;
+          flex-grow: 1;
+          font-weight: inherit;
+        }
+        span {
+          font-size: 0.8em;
+          
+        }
+      }
+  
+      &-icon {
+        padding: 4px;
+        width: 24px;
+        height: 24px;
+        margin: 0 10px 0 4px;      
+      }
+  
+      &-grab {
+        margin-left: 10px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+  
+        &::after{ 
+          content: '☰';
+        }
+        &:hover {
+          transition: 100ms;
+          color: white;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+  
+  @keyframes slideLeft {
+    0% {
+      margin-left: 0;
+      background-color: hsl(0,0,70);
+    }
+    100% {
+      margin-left: -40px;
+      background-color: hsl(100,90,70);
+    }
+  }
+  
+  @keyframes slideRight {
+    0% {
+      margin-left: -40px;
+      background-color: hsl(100,90,70);
+    }
+    100% {
+      margin-left: 0;
+      background-color: hsl(0,0,70);
+    }
+  }
+  
