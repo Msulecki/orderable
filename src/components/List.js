@@ -4,30 +4,51 @@ import Icon from '../assets/icon.svg';
 
 function List(props) {
     const { newData, setNewData } = props
-    const [dragOverItem, setDragOverItem] = useState(null);
     const [draggedItem, setDraggedItem] = useState(null);
     const [dropped, setDropped] = useState(null);
     const [reorder, setReorder] = useState([null, null]);
     const [offsetTop, setOffsetTop] = useState(null);
+    const [margin, setMargin] = useState("1px 0 1px 0");
     const [relativeOffset, setRelativeOffset] = useState(null);
+    const [touchT, setTouchT] = useState(null);
 
-    let data = [];
-    let draggable = {
+    let orderedData = [];
+    let draggedItemStyle = {
         position: "absolute",
         opacity: ".95",
         animation: "slideLeft 300ms forwards",
-        top: offsetTop - relativeOffset + "px"
+        top: offsetTop - relativeOffset + "px",
+        transition: "0ms"
+    }
+
+
+    let hoveredItemStyle = {
+        backgroundColor: "hsl(100,30%,80%)",
+        margin
+    }
+
+    const reorderList = (dragged, draggedOn) => {
+        setReorder([dragged, draggedOn]);
     }
 
     const handleDragOver = (e) => {
-        if (e.target.dataset.key !== dragOverItem && typeof e.target.dataset.key !== 'undefined' && draggedItem !== null) {
-            setDragOverItem(e.target.dataset.key);
-            dragOverItem && reorderList(draggedItem, parseInt(e.target.dataset.key));
+        const touchedTarget = e.touches ? getTouchedTarget(e).dataset.key : undefined;
+        const key = parseInt(touchedTarget || e.target.dataset.key);
+        if (typeof draggedItem === 'number' && !isNaN(key)) {
+            reorderList(draggedItem, key);
+            const target = e.target || touchedTarget;
+            (touchedTarget !== undefined) && console.log(touchedTarget);
+            setMargin((target.getBoundingClientRect().top <= offsetTop) ? "34px 0 1px 0" : "1px 0 34px 0")
+            // TODO: handle mobile
         }
     }
 
-    function reorderList(dragged, dragOn) {
-        setReorder([dragged, dragOn]);
+    function getTouchedTarget(e) {
+        const x = e.touches[0].pageX;
+        const y = e.touches[0].pageY;
+        const target = document.elementFromPoint(x, y);
+        document.body.style.touchAction = "none"; // disable screen scrolling when dragging item on mobile
+        return target.dataset ? target : undefined;
     }
 
     const handleDrop = () => {
@@ -35,66 +56,82 @@ function List(props) {
         setReorder([null, null]);
         setDraggedItem(null);
 
+        // TODO: rewrite item placing
+
         newData.forEach((el, i) => {
             if (i >= reorder[1] && i !== reorder[0]) {
-                el.order = i + 1
+                el.order = i + 1;
             }
             if (i === reorder[0]) {
                 el.order = reorder[0] > reorder[1] ? reorder[1] : reorder[1] + 2;
             }
-            data.push(el);
+            orderedData.push(el);
         });
 
-        data.sort((a, b) => a.order - b.order).forEach((el, i) => {
-            el.order = i;
-        });
+        orderedData.sort((a, b) => a.order - b.order).forEach((el, i) => { el.order = i }); // sort by order, and recalculate new order values
 
-        setNewData(data);
+        setNewData(orderedData);
         setDropped(droppedItem);
     }
 
     const handleMouseDown = (item, e) => {
-        setRelativeOffset(e.pageY - e.target.getBoundingClientRect().top);
+        const yOffset = e.touches ? e.touches[0].pageY : e.pageY;
+        setRelativeOffset(yOffset - e.target.getBoundingClientRect().top);
         setDraggedItem(item);
-        setOffsetTop(e.pageY - 1);
+        setOffsetTop(yOffset - 1); // -1 because of item border
         setDropped(null);
     }
 
     useEffect(() => {
         window.addEventListener("mouseup", () => setDraggedItem(null));
-        return () => window.removeEventListener("mouseup", () => setDraggedItem(null));
+        window.addEventListener("touchend", () => setDraggedItem(null));
+        return () => {
+            window.removeEventListener("mouseup", () => setDraggedItem(null));
+            window.removeEventListener("touchend", () => setDraggedItem(null));
+        }
     });
-
     useEffect(() => {
-        const handleMouseMove = e => draggedItem >= 0 && setOffsetTop(e.pageY - 1);
+        const handleMouseMove = e => setOffsetTop((e.touches ? e.touches[0].pageY : e.pageY) - 1);
+
         window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("touchmove", handleMouseMove);
         return () => {
             window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("touchmove", handleMouseMove);
         }
     });
 
     return (
         <ul className="list">
-            {newData.sort((a, b) => (a.order - b.order)).map((el, i) => {
+            {newData.map((el, i) => {
                 return (
-                    <>
+                    <React.Fragment key={i}>
                         <li
-                            key={i}
-                            className={`list__item ${dropped === i ? 'slideRight' : ''} ${dragOverItem === i ? 'hidden' : ''}`}
-                            style={draggedItem === i ? draggable : undefined}
+                            className={`list__item ${dropped === i ? 'slideRight' : ''} `}
+                            style={draggedItem === i ?
+                                draggedItemStyle : (draggedItem !== null && reorder[1] === i) ?
+                                    hoveredItemStyle : undefined}
                             onMouseOver={handleDragOver}
+                            onTouchMove={handleDragOver}
                             onMouseUp={handleDrop}
+                            onTouchEnd={handleDrop}
+
                         >
                             <img className="list__item-icon" src={Icon} alt="icon" />
-                            <div className="list__item-title"><h1>{el.title}</h1> <span>order: {el.order}</span></div>
+                            <div className="list__item-title">
+                                <h1>{el.title}</h1>
+                                <span>order: {el.order}</span>
+                            </div>
                             <div
                                 data-key={i}
                                 className="list__item-grab"
-                                onMouseDown={handleMouseDown.bind(this, i)}>
+                                onMouseDown={handleMouseDown.bind(this, i)}
+                                onTouchStart={handleMouseDown.bind(this, i)}
+                            >
                             </div>
                         </li>
-                        {draggedItem === i ? <li key={`dummy_${i}`} className="list__item dummy"></li> : undefined}
-                    </>
+                        {/* {((draggedItem && reorder[1] === i)) ? <li className="list__item dummy"></li> : undefined} */}
+                    </React.Fragment>
                 )
             })}
         </ul >
