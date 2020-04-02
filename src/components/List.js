@@ -10,7 +10,6 @@ function List(props) {
     const [offsetTop, setOffsetTop] = useState(null);
     const [margin, setMargin] = useState("1px 0 1px 0");
     const [relativeOffset, setRelativeOffset] = useState(null);
-    const [touchT, setTouchT] = useState(null);
 
     let orderedData = [];
     let draggedItemStyle = {
@@ -20,7 +19,6 @@ function List(props) {
         top: offsetTop - relativeOffset + "px",
         transition: "0ms"
     }
-
 
     let hoveredItemStyle = {
         backgroundColor: "hsl(100,30%,80%)",
@@ -32,14 +30,12 @@ function List(props) {
     }
 
     const handleDragOver = (e) => {
-        const touchedTarget = e.touches ? getTouchedTarget(e).dataset.key : undefined;
-        const key = parseInt(touchedTarget || e.target.dataset.key);
+        const touchedTarget = e.touches ? getTouchedTarget(e) : undefined;
+        const key = parseInt(e.touches ? touchedTarget.dataset.key : e.target.dataset.key);
         if (typeof draggedItem === 'number' && !isNaN(key)) {
-            reorderList(draggedItem, key);
-            const target = e.target || touchedTarget;
-            (touchedTarget !== undefined) && console.log(touchedTarget);
-            setMargin((target.getBoundingClientRect().top <= offsetTop) ? "34px 0 1px 0" : "1px 0 34px 0")
-            // TODO: handle mobile
+            draggedItem !== key && reorderList(draggedItem, key);
+            const itemOffset = e.touches ? (touchedTarget.dataset.key ? touchedTarget.getBoundingClientRect().top : 0) : e.target.getBoundingClientRect().top;
+            setMargin((itemOffset <= offsetTop) ? "34px 0 1px 0" : "1px 0 34px 0");
         }
     }
 
@@ -47,14 +43,14 @@ function List(props) {
         const x = e.touches[0].pageX;
         const y = e.touches[0].pageY;
         const target = document.elementFromPoint(x, y);
+        // console.log(target);
         document.body.style.touchAction = "none"; // disable screen scrolling when dragging item on mobile
         return target.dataset ? target : undefined;
     }
 
     const handleDrop = () => {
         const droppedItem = reorder[1];
-        setReorder([null, null]);
-        setDraggedItem(null);
+
 
         // TODO: rewrite item placing
 
@@ -67,7 +63,8 @@ function List(props) {
             }
             orderedData.push(el);
         });
-
+        setReorder([null, null]);
+        setDraggedItem(null);
         orderedData.sort((a, b) => a.order - b.order).forEach((el, i) => { el.order = i }); // sort by order, and recalculate new order values
 
         setNewData(orderedData);
@@ -83,15 +80,23 @@ function List(props) {
     }
 
     useEffect(() => {
-        window.addEventListener("mouseup", () => setDraggedItem(null));
-        window.addEventListener("touchend", () => setDraggedItem(null));
+        window.addEventListener("mouseup", () => {
+            setDraggedItem(null);
+            setMargin("1px 0 1px 0");
+        });
+        window.addEventListener("touchend", () => {
+            setDraggedItem(null);
+            setMargin("1px 0 1px 0");
+        });
         return () => {
             window.removeEventListener("mouseup", () => setDraggedItem(null));
             window.removeEventListener("touchend", () => setDraggedItem(null));
         }
     });
     useEffect(() => {
-        const handleMouseMove = e => setOffsetTop((e.touches ? e.touches[0].pageY : e.pageY) - 1);
+        const handleMouseMove = e => {
+            setOffsetTop((e.touches ? e.touches[0].pageY : e.pageY) - 1);
+        };
 
         window.addEventListener("mousemove", handleMouseMove);
         window.addEventListener("touchmove", handleMouseMove);
