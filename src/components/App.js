@@ -4,8 +4,6 @@ import '../styles/App.scss';
 
 function App() {
 
-  console.log('app render');
-
   const data = [
     {
       title: "Item One",
@@ -50,8 +48,6 @@ function App() {
   ]
 
   const [newData, setNewData] = useState([...data]);
-
-
 
   return (
     <div className="app">
