@@ -21,7 +21,6 @@ function List(props) {
     }
 
     let hoveredItemStyle = {
-        backgroundColor: "hsl(100,30%,80%)",
         margin
     }
 
@@ -32,6 +31,7 @@ function List(props) {
     const handleDragOver = (e) => {
         const touchedTarget = e.touches ? getTouchedTarget(e) : undefined;
         const key = parseInt(e.touches ? touchedTarget.dataset.key : e.target.dataset.key);
+
         if (typeof draggedItem === 'number' && !isNaN(key)) {
             draggedItem !== key && reorderList(draggedItem, key);
             const itemOffset = e.touches ? (touchedTarget.dataset.key ? touchedTarget.getBoundingClientRect().top : 0) : e.target.getBoundingClientRect().top;
@@ -43,16 +43,13 @@ function List(props) {
         const x = e.touches[0].pageX;
         const y = e.touches[0].pageY;
         const target = document.elementFromPoint(x, y);
-        // console.log(target);
+
         document.body.style.touchAction = "none"; // disable screen scrolling when dragging item on mobile
+
         return target.dataset ? target : undefined;
     }
 
     const handleDrop = () => {
-        const droppedItem = reorder[1];
-
-
-        // TODO: rewrite item placing
 
         newData.forEach((el, i) => {
             if (i >= reorder[1] && i !== reorder[0]) {
@@ -63,19 +60,20 @@ function List(props) {
             }
             orderedData.push(el);
         });
+
         setReorder([null, null]);
         setDraggedItem(null);
-        orderedData.sort((a, b) => a.order - b.order).forEach((el, i) => { el.order = i }); // sort by order, and recalculate new order values
+        setDropped(reorder[1]);
 
+        orderedData.sort((a, b) => a.order - b.order).forEach((el, i) => { el.order = i }); // sort by order, and recalculate new order values
         setNewData(orderedData);
-        setDropped(droppedItem);
     }
 
     const handleMouseDown = (item, e) => {
         const yOffset = e.touches ? e.touches[0].pageY : e.pageY;
         setRelativeOffset(yOffset - e.target.getBoundingClientRect().top);
         setDraggedItem(item);
-        setOffsetTop(yOffset - 1); // -1 because of item border
+        setOffsetTop(yOffset - 2); // -2 because of item border 1px
         setDropped(null);
     }
 
@@ -93,9 +91,10 @@ function List(props) {
             window.removeEventListener("touchend", () => setDraggedItem(null));
         }
     });
+
     useEffect(() => {
         const handleMouseMove = e => {
-            setOffsetTop((e.touches ? e.touches[0].pageY : e.pageY) - 1);
+            setOffsetTop((e.touches ? e.touches[0].pageY : e.pageY));
         };
 
         window.addEventListener("mousemove", handleMouseMove);
@@ -107,7 +106,9 @@ function List(props) {
     });
 
     return (
-        <ul className="list">
+        <ul className="list"
+            onMouseUp={handleDrop}
+            onTouchEnd={handleDrop}>
             {newData.map((el, i) => {
                 return (
                     <React.Fragment key={i}>
@@ -118,8 +119,6 @@ function List(props) {
                                     hoveredItemStyle : undefined}
                             onMouseOver={handleDragOver}
                             onTouchMove={handleDragOver}
-                            onMouseUp={handleDrop}
-                            onTouchEnd={handleDrop}
 
                         >
                             <img className="list__item-icon" src={Icon} alt="icon" />
@@ -135,7 +134,7 @@ function List(props) {
                             >
                             </div>
                         </li>
-                        {/* {((draggedItem && reorder[1] === i)) ? <li className="list__item dummy"></li> : undefined} */}
+                        {((draggedItem === i && reorder[0] === null)) ? <li className="list__item dummy"></li> : undefined}
                     </React.Fragment>
                 )
             })}

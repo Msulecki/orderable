@@ -19,7 +19,7 @@
       align-items: center;
       margin: 1px 0;
       user-select: none;
-    //  transition: 100ms; buggy on mobile, TODO: fix
+    //  transition: 100ms;// buggy on mobile, TODO: fix
   
       &:hover{
         background-color: hsl(0,0,75);
