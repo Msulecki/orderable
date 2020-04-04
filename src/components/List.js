@@ -40,8 +40,8 @@ function List(props) {
     }
 
     function getTouchedTarget(e) {
-        const x = e.touches[0].pageX;
-        const y = e.touches[0].pageY;
+        const x = e.touches[0].clientX;
+        const y = e.touches[0].clientY;
         const target = document.elementFromPoint(x, y);
 
         document.body.style.touchAction = "none"; // disable screen scrolling when dragging item on mobile
@@ -70,8 +70,8 @@ function List(props) {
     }
 
     const handleMouseDown = (item, e) => {
-        const yOffset = e.touches ? e.touches[0].pageY : e.pageY;
-        setRelativeOffset(yOffset - e.target.getBoundingClientRect().top);
+        const yOffset = e.touches ? e.touches[0].clientY : e.clientY;
+        setRelativeOffset(yOffset - e.target.getBoundingClientRect().top - window.scrollY);
         setDraggedItem(item);
         setOffsetTop(yOffset - 2); // -2 because of item border 1px
         setDropped(null);
@@ -94,7 +94,7 @@ function List(props) {
 
     useEffect(() => {
         const handleMouseMove = e => {
-            setOffsetTop((e.touches ? e.touches[0].pageY : e.pageY));
+            setOffsetTop((e.touches ? e.touches[0].clientY : e.clientY));
         };
 
         window.addEventListener("mousemove", handleMouseMove);
