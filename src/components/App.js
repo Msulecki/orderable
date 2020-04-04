@@ -4,7 +4,7 @@ import '../styles/App.scss';
 
 function App() {
 
-  const data = [
+  const sampleData = [
     {
       title: "Item One",
       order: 0
@@ -47,7 +47,7 @@ function App() {
     },
   ]
 
-  const [newData, setNewData] = useState([...data]);
+  const [newData, setNewData] = useState([...sampleData]);
 
   return (
     <div className="app">
